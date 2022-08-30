@@ -175,163 +175,15 @@ namespace SstPrint2Pdf
 
             } while (prsKw.StringResult != "Нет");
 
-
             return null;
-
-
         }
-
-
 
         #endregion
-        /// <summary>
-        /// Для демоверсии
-        /// </summary>
-        private static byte _counter1 = 0;
-        private static string _pg = "Да";
-        static DBObjectCollection _markers = null;
-        static void ClearTransientGraphics()
-        {
-
-            TransientManager tm = TransientManager.CurrentTransientManager;
-
-            IntegerCollection intCol = new IntegerCollection();
-
-            if (_markers != null)
-            {
-
-                foreach (DBObject marker in _markers)
-                {
-
-                    tm.EraseTransient(marker, intCol);
-
-                    marker.Dispose();
-
-                }
-
-            }
-
-        }
-
-        [CommandMethod("Test", CommandFlags.Modal)]
-        public static void tst()
-        {
-
-
-            var activeDoc = Application.DocumentManager.MdiActiveDocument;
-
-            var db = activeDoc.Database;
-
-            var ed = activeDoc.Editor;
-
-            var peo = new PromptEntityOptions("Select a polyline : ");
-
-            peo.SetRejectMessage("Not a polyline");
-
-            peo.AddAllowedClass(typeof(Autodesk.AutoCAD.DatabaseServices.Polyline), true);
-
-            var per = ed.GetEntity(peo);
-
-            if (per.Status != PromptStatus.OK) return;
-
-            var plOid = per.ObjectId;
-            var ppr = ed.GetPoint(new PromptPointOptions("Select an internal point : "));
-
-            if (ppr.Status != PromptStatus.OK) return;
-
-            var testPoint = ppr.Value;
-
-
-
-            var pao = new PromptAngleOptions("Specify ray direction");
-
-            pao.BasePoint = testPoint;
-
-            pao.UseBasePoint = true;
-
-            var rayAngle = ed.GetAngle(pao);
-
-            if (rayAngle.Status != PromptStatus.OK)
-                return;
-
-
-
-            var tempPoint = testPoint.Add(Vector3d.XAxis);
-            tempPoint = tempPoint.RotateBy(rayAngle.Value, Vector3d.ZAxis, testPoint);
-            var rayDir = tempPoint - testPoint;
-
-
-
-            ClearTransientGraphics();
-            _markers = new DBObjectCollection();
-
-            using (Transaction tr = db.TransactionManager.StartTransaction())
-            {
-
-                var plcurve = tr.GetObject(plOid, OpenMode.ForRead) as Curve;
-
-                for (int cnt = 0; cnt < 2; cnt++)
-                {
-
-                    if (cnt == 1) rayDir = rayDir.Negate();
-                    using (Ray ray = new Ray())
-                    {
-                        ray.BasePoint = testPoint;
-                        ray.UnitDir = rayDir;
-
-                        var intersectionPts = new Point3dCollection();
-
-                        plcurve.IntersectWith(ray, Intersect.OnBothOperands, intersectionPts, IntPtr.Zero, IntPtr.Zero);
-
-
-
-                        foreach (Point3d pt in intersectionPts)
-                        {
-
-                            Circle marker = new Circle(pt, Vector3d.ZAxis, 0.2);
-
-                            marker.Color = Color.FromRgb(0, 255, 0);
-
-                            _markers.Add(marker);
-                            var intCol = new IntegerCollection();
-
-                            var tm = TransientManager.CurrentTransientManager;
-                            tm.AddTransient(marker, TransientDrawingMode.Highlight, 128, intCol);
-                            ed.WriteMessage("\n" + pt.ToString());
-
-                        }
-
-                    }
-
-                }
-
-                tr.Commit();
-
-
-
-            }
-
-
-
-
-
-
-
-
-
-        }
+            
         [CommandMethod("Print2Pdf", CommandFlags.Modal)]
-        public static void Print2Pdf() // This method can have any name
+        public static void Print2Pdf() 
         {
 
-            //if (++_counter1 > 4)
-            //{
-            //    CurrentDrawing.Editor.WriteMessage("\nПревышено максимальное количество запусков команды.");
-            //    CurrentDrawing.Editor.WriteMessage("\nДля возобновления работы, перегрузите Автокад и загрузите библиотеку снова.");
-            //    CurrentDrawing.Editor.WriteMessage("\nДля получения полной версии свяжитесь с разработчиком.");
-            //   CurrentDrawing.Editor.WriteMessage("\nРазработчик- Домбровский П.Э.\ne-mail: pdambrouski@gmail.com");
-            //    return;
-            //}
             try
             {
                 CurrentDrawing.Editor.WriteMessage("\nТекущие настройки: Печать в один файл - \"{0}\"", _pg);
@@ -443,17 +295,9 @@ namespace SstPrint2Pdf
 
         }
         [CommandMethod("PrintExt2Pdf")]
-        public static void PrintExt2Pdf() // This method can have any name
+        public static void PrintExt2Pdf() 
         {
 
-            //if (++_counter1 > 4)
-            //{
-            //    CurrentDrawing.Editor.WriteMessage("\nПревышено максимальное количество запусков команды.");
-            //    CurrentDrawing.Editor.WriteMessage("\nДля возобновления работы, перегрузите Автокад и загрузите библиотеку снова.");
-            //    CurrentDrawing.Editor.WriteMessage("\nДля получения полной версии свяжитесь с разработчиком.");
-            //   CurrentDrawing.Editor.WriteMessage("\nРазработчик- Домбровский П.Э.\ne-mail: pdambrouski@gmail.com");
-            //    return;
-            //}
             try
             {
                 var lr = GetString("Введите имя слоя на котором лежат только рамки: ");
